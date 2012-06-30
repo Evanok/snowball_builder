@@ -1,0 +1,22 @@
+sudo cp -r proprietary-drivers/vendor/st-ericsson/snowball/proprietary/wireless /media/rootfs/lib/firmware
+
+# echo "deb-src http://srvdistrib2.thales.srs/debian squeeze main" >> /etc/apt/sources.list.d/multistrap-squeeze.list # Nécessaire pour apt-get build-dep ?
+# apt-get update
+# apt-get build-dep bluez
+# su user -
+$ git clone ssh://fwsic1/~t0132687/git/export/STAGES/bluez_snowball/.git  # Pas fonctionnel si VLAN pas configurés ? Effectuer cette commande depuis un PC de développement sur la carte microsd montée
+$ cd bluez_snowball
+$ ./configure --prefix=/usr && make && make install
+
+
+#!/bin/sh
+echo 8>/proc/sys/kernel/printk
+hciattach -a 23 -n -s 115200 /dev/ttyAMA0 cg2900 115200 flow &
+modprobe cw1200_core
+modprobe cw1200_wlan
+sleep 3
+
+
+
+ifconfig wlan0 up
+iwconfig wlan0 power off
