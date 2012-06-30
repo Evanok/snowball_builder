@@ -60,6 +60,10 @@ if [ -z "$PROJECT" ]; then
     error "You must provide a valid project name."
 fi;
 
+if [ ! -d $BASE_PATH/system ]; then
+    mkdir $BASE_PATH/system
+fi;
+
 sudo rm -rf $BASE_PATH/system/$PROJECT
 mkdir $BASE_PATH/system/$PROJECT
 
