@@ -30,7 +30,7 @@ EOF
 }
 
 
-options=$(getopt -o hc:p -l help,config:,project: -- "$@")
+options=$(getopt -o hc:p: -l help,config:,project: -- "$@")
 if [ $? -ne  0 ]; then
     print_usage
     exit 1
@@ -44,11 +44,9 @@ while true; do
         -h|--help)              print_usage && exit 0;;
         -c|--config)            CONFIG=$2; shift 2;;
         -p|--project)           PROJECT=$2; shift 2;;
-        --)                     shift 1; break;;
-        *)                      break;;
+	*)                      break;;
     esac
 done
-
 
 dpkg -l | grep multistrap > /dev/null
 if [ $? -ne 0 ]; then
