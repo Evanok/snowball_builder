@@ -3,8 +3,9 @@
 BASE_PATH=`pwd`
 KERNEL=$PWD/kernel
 JOBS=4
-BIN_ARM=$BASE_PATH/cross-arm/bin/arm-none-linux-gnueabi-
+BIN_ARM=$BASE_PATH/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 ARCH=arm
+CROSS_DIR=$BASE_PATH/arm-none-linux-gnueabi
 
 CROSS_PARAMS="ARCH=$ARCH CROSS_COMPILE=$BIN_ARM"
 
@@ -48,6 +49,8 @@ while true; do
     esac
 done
 
+
+
 if [ ! -z "$CONFIG" ]; then
     if [ ! -f $CONFIG ]; then
         error "Configure file: $CONFIG not found."
@@ -71,10 +74,19 @@ ROOTFS=$BASE_PATH/system/$PROJECT/rootfs_config
 
  # COMPILE KERNEL SOURCE
 
-echo "Compiling kernel [jobs = $JOBS]";
+echo -n "Check kernel dir..."
 if [ ! -d $KERNEL ]; then
-    error "kernel sources not found";
+   git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $KERNEL >/dev/null
 fi
+echo " Done."
+
+echo -n "Check cross arm dir..."
+if [ ! -d $CROSS_DIR ]; then
+   git clone /home/arthur/git/arm-none-linux-gnueabi.git $CROSS_DIR >/dev/null
+fi
+echo " Done."
+
+echo "Compiling kernel [jobs = $JOBS]";
 
 MOD_PATH="INSTALL_MOD_PATH=$ROOTFS/modules/ "
 
