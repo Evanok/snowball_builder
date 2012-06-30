@@ -1,0 +1,187 @@
+#!/bin/bash
+
+FS_HOSTNAME=snowball
+
+FS_ARCH=armel
+
+FS_CC_MULTISTRAP_CONFIG="config/"$FS_HOSTNAME"_multistrap_configuration"
+FS_CC_SETUP_SCRIPT="scripts/"$FS_HOSTNAME"_setup_script.sh"
+FS_CC_CONFIG_SCRIPT="scripts/"$FS_HOSTNAME"_config_script.sh"
+
+FS_REPO_NAME="squeeze"
+FS_REPO_PACKAGES="ntpdate udev lrzsz netcat telnetd net-tools openssh-server iputils-ping apt nano isc-dhcp-client build-essential"
+FS_REPO_SOURCE="http://ftp.fr.debian.org/debian/"
+FS_REPO_SUITE="squeeze"
+FS_MAC_ADDRESS=02:00:00:24:00:01
+FS_TTY_NAME=ttyAMA
+FS_TTY_PORT=2
+
+
+#======================================#
+#Create multistrap's configuration file#
+#======================================#
+
+FS_MULTISTRAP_CONFIG_tmp=$1/$FS_CC_MULTISTRAP_CONFIG
+FS_SETUP_SCRIPT=$1/$FS_CC_SETUP_SCRIPT
+FS_CONFIG_SCRIPT=$1/$FS_CC_CONFIG_SCRIPT
+
+FS_MULTISTRAP_CONFIG=toto_l_asticot
+
+echo "[General]" > $FS_MULTISTRAP_CONFIG
+
+if [ $FS_ARCH != "" ] ; then
+    echo "arch=$FS_ARCH" >> $FS_MULTISTRAP_CONFIG
+fi
+{
+    echo "directory=./rootfs"
+    echo "cleanup=true"
+    echo "#same as --no-auth option if set to true"
+    echo "noauth=true"
+    echo "unpack=true"
+    echo
+    echo "#Configuration scripts to use"
+    echo "setupscript=./$FS_CC_SETUP_SCRIPT"
+    echo "configscript=./$FS_CC_CONFIG_SCRIPT"
+
+    echo
+    echo "#Filesystem will be placed in"
+    echo "tarballname=./boot/rootfs-$KER_ARCH-$FS_HOSTNAME.tar"
+} | cat >> $FS_MULTISTRAP_CONFIG
+
+#Set up aptsources and bootstrap
+i=1
+
+for repo_name_value in $FS_REPO_NAME; do
+    aptsources=$aptsources$repo_name_value" "
+    bootstrap=$bootstrap$repo_name_value" "
+    let $[i++]
+done
+
+{
+    echo
+    echo "aptsources=$aptsources"
+    echo "bootstrap=$bootstrap"
+} | cat >> $FS_MULTISTRAP_CONFIG
+
+i=1
+for repo_name_value in $FS_REPO_NAME; do
+
+    repo_packages_value=`echo $FS_REPO_PACKAGES | cut -d ';' -f$i,$i`
+    repo_sources_value=`echo $FS_REPO_SOURCE | cut -d ' ' -f$i,$i`
+    repo_suite_value=`echo $FS_REPO_SUITE | cut -d ' ' -f$i,$i`
+
+    {
+	echo
+	echo "["$repo_name_value"]"
+	echo "packages=$repo_packages_value"
+	echo "source=$repo_sources_value"
+	echo "suite=$repo_suite_value"
+        echo "omitdebsrc=true"
+    } | cat >> $FS_MULTISTRAP_CONFIG
+
+    let $[i++]
+done
+
+touch $FS_MULTISTRAP_CONFIG_tmp
+mv $FS_MULTISTRAP_CONFIG $FS_MULTISTRAP_CONFIG_tmp
+
+FS_MULTISTRAP_CONFIG=$FS_MULTISTRAP_CONFIG_tmp
+
+
+#===================#
+#Create SETUP script#
+#===================#
+
+cat << EOF > $FS_SETUP_SCRIPT
+#!/bin/sh
+
+#set -e
+
+# This setup script is an alternative method of adjusting the tarball
+# contents immediately after multistrap has unpacked the packages.
+
+# At this stage, any operations inside the rootfs must not try to
+# execute any binaries within the rootfs.
+
+# The script is called with the following arguments:
+
+# \$1 = \$DIR  - the top directory of the debootstrapped system
+# \$1 = \$ARCH - the specified architecture, already checked with dpkg-architecture.
+
+# setup.sh needs to be executable.
+
+echo "Setting hostname"
+echo "$FS_HOSTNAME" > \$1/etc/hostname
+
+echo "Setting up root user (user=root password=root)"
+echo "root:Npge08pfz4wuk:0:0:root:/root:/bin/bash" > \$1/etc/passwd
+echo "root:Npge08pfz4wuk:0:" > \$1/etc/group
+
+echo "Setting up fstab"
+echo "proc /proc proc defaults 0 0" >> \$1/etc/fstab
+echo "sysfs /sys sysfs defaults 0 0" >> \$1/etc/fstab
+
+echo "Copying kernel modules"
+if [ ! -d \$1/lib/modules ]; then mkdir \$1/lib/modules; fi
+sudo cp -r ./modules/lib/modules/* \$1/lib/modules/
+
+echo "Setting a mac address (fixing random mac issue)"
+{
+    echo "auto lo";
+    echo "iface lo inet loopback";
+    echo "";
+    echo "auto eth0";
+    echo "iface eth0 inet dhcp";
+} | cat > \$1/etc/network/interfaces
+EOF
+
+if [ ! -z "$FS_MAC_ADDRESS" ] ; then
+    cat << EOF >> $FS_SETUP_SCRIPT
+echo "hwaddress ether $FS_MAC_ADDRESS"; >> \$1/etc/network/interfaces
+EOF
+fi
+
+if [ -z "$FS_TTY_NAME" ] ; then
+    FS_TTY_NAME="ttyS" ; fi
+if [ -z "$FS_TTY_PORT" ] ; then
+    FS_TTY_PORT="0" ; fi
+
+cat << EOF >> $FS_SETUP_SCRIPT
+echo "Setting up /dev"
+sudo mknod \$1/dev/console c 5 1
+sudo mknod \$1/dev/null c 1 3
+sudo mknod \$1dev/${FS_TTY_NAME}0 c 4 64
+sudo mknod \$1dev/${FS_TTY_NAME}1 c 4 65
+sudo mknod \$1dev/${FS_TTY_NAME}2 c 4 66
+EOF
+chmod a+x $FS_SETUP_SCRIPT
+
+
+
+#====================#
+#Create CONFIG script#
+#====================#
+
+cat << EOF > $FS_CONFIG_SCRIPT
+#!/bin/sh
+
+#set -e
+
+# This config script provides a method of adjusting the tarball
+# contents after multistrap has completed.
+# The script is copied into the tarball and unpacked to:
+# /config.sh
+
+# This example file can act as a skeleton for your own scripts.
+echo "Mounting /proc"
+mount -n /proc
+mount -n /sys
+dpkg --configure -a
+echo ${FS_TTY_NAME}$FS_TTY_PORT >> etc/securetty
+printf "T$FS_TTY_PORT:123:respawn:/sbin/getty 115200 ${FS_TTY_NAME}$FS_TTY_PORT\n" >> etc/inittab
+echo "Set a new root password"
+passwd
+chage -d 150 root
+echo "You need to reboot your system"
+EOF
+chmod a+x $FS_CONFIG_SCRIPT
