@@ -50,6 +50,17 @@ while true; do
 done
 
 
+dpkg -l | grep multistrap > /dev/null
+if [ $? -ne 0 ]; then
+    echo " You must install mulstistrap package."
+    exit 1
+fi;
+
+dpkg -l | grep uboot-mkimage >/dev/null
+if [ $? -ne 0 ]; then
+    echo " You must install uboot-mkimage package."
+    exit 1
+fi;
 
 if [ ! -z "$CONFIG" ]; then
     if [ ! -f $CONFIG ]; then
