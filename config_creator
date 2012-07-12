@@ -33,7 +33,7 @@ echo "[General]" > $CONFIG_MULTISTRAP
 
     echo
     echo "#Filesystem will be placed in"
-    echo "tarballname=./boot/rootfs-armel-snowball.tar"
+    echo "tarballname=$ROOTFS_CONFIG/boot/rootfs-armel-snowball.tar"
     echo
     echo "aptsources=squeeze"
     echo "bootstrap=squeeze"
@@ -52,19 +52,19 @@ cat << EOF > $SETUP_SCRIPT
 #!/bin/sh
 
 echo "Setting hostname"
-echo "$HOSTNAME" > $ROOTFS_CONFIG/etc/hostname
+echo "$HOSTNAME" > \$1/etc/hostname
 
 echo "Setting up root user (user=root password=root)"
-echo "root:Npge08pfz4wuk:0:0:root:/root:/bin/bash" > $ROOTFS_CONFIG/etc/passwd
-echo "root:Npge08pfz4wuk:0:" > $ROOTFS_CONFIG/etc/group
+echo "root:Npge08pfz4wuk:0:0:root:/root:/bin/bash" > \$1/etc/passwd
+echo "root:Npge08pfz4wuk:0:" > \$1/etc/group
 
 echo "Setting up fstab"
-echo "proc /proc proc defaults 0 0" >> $ROOTFS_CONFIG/etc/fstab
-echo "sysfs /sys sysfs defaults 0 0" >> $ROOTFS_CONFIG/etc/fstab
+echo "proc /proc proc defaults 0 0" >> \$1/etc/fstab
+echo "sysfs /sys sysfs defaults 0 0" >> \$1/etc/fstab
 
 echo "Copying kernel modules"
-if [ ! -d $ROOTFS_CONFIG/lib/modules ]; then mkdir $ROOTFS_CONFIG/lib/modules; fi
-sudo cp -r ./modules/lib/modules/* $ROOTFS_CONFIG/lib/modules/
+if [ ! -d \$1/lib/modules ]; then mkdir \$1/lib/modules; fi
+sudo cp -r ./modules/lib/modules/* \$1/lib/modules/
 
 echo "Setting a mac address (fixing random mac issue)"
 {
@@ -75,15 +75,15 @@ echo "Setting a mac address (fixing random mac issue)"
     echo "iface eth0 inet static";
     echo "address $IP_BOARD";
     echo "netmask 255.255.255.0";
-    echo "hwaddress ether $MAC_ADDRESS";
-} | cat > $ROOTFS_CONFIG/etc/network/interfaces
+} | cat > \$1/etc/network/interfaces
 
+echo "hwaddress ether $MAC_ADDRESS";
 echo "Setting up /dev"
-sudo mknod $ROOTFS_CONFIG/dev/console c 5 1
-sudo mknod $ROOTFS_CONFIG/dev/null c 1 3
-sudo mknod $ROOTFS_CONFIG/dev/ttyS0 c 4 64
-sudo mknod $ROOTFS_CONFIG/dev/ttyS1 c 4 65
-sudo mknod $ROOTFS_CONFIG/dev/ttyS2 c 4 66
+sudo mknod \$1/dev/console c 5 1
+sudo mknod \$1/dev/null c 1 3
+sudo mknod \$1/dev/ttyAMA0 c 4 64
+sudo mknod \$1/dev/ttyAMA1 c 4 65
+sudo mknod \$1/dev/ttyAMA2 c 4 66
 
 EOF
 
@@ -100,8 +100,8 @@ echo "Mounting /proc"
 mount -n /proc
 mount -n /sys
 dpkg --configure -a
-echo ttyS0 >> etc/securetty
-printf "T0:123:respawn:/sbin/getty 115200 ttyS0\n" >> etc/inittab
+echo ttyAMA2 >> etc/securetty
+printf "T2:123:respawn:/sbin/getty 115200 ttyAMA2\n" >> etc/inittab
 echo "Set a new root password"
 passwd
 chage -d 150 root
