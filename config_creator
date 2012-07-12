@@ -52,19 +52,19 @@ cat << EOF > $SETUP_SCRIPT
 #!/bin/sh
 
 echo "Setting hostname"
-echo "$HOSTNAME" > \$ROOTFS_CONFIG/etc/hostname
+echo "$HOSTNAME" > $ROOTFS_CONFIG/etc/hostname
 
 echo "Setting up root user (user=root password=root)"
-echo "root:Npge08pfz4wuk:0:0:root:/root:/bin/bash" > \$ROOTFS_CONFIG/etc/passwd
-echo "root:Npge08pfz4wuk:0:" > \$ROOTFS_CONFIG/etc/group
+echo "root:Npge08pfz4wuk:0:0:root:/root:/bin/bash" > $ROOTFS_CONFIG/etc/passwd
+echo "root:Npge08pfz4wuk:0:" > $ROOTFS_CONFIG/etc/group
 
 echo "Setting up fstab"
-echo "proc /proc proc defaults 0 0" >> \$ROOTFS_CONFIG/etc/fstab
-echo "sysfs /sys sysfs defaults 0 0" >> \$ROOTFS_CONFIG/etc/fstab
+echo "proc /proc proc defaults 0 0" >> $ROOTFS_CONFIG/etc/fstab
+echo "sysfs /sys sysfs defaults 0 0" >> $ROOTFS_CONFIG/etc/fstab
 
 echo "Copying kernel modules"
-if [ ! -d \$ROOTFS_CONFIG/lib/modules ]; then mkdir \$ROOTFS_CONFIG/lib/modules; fi
-sudo cp -r ./modules/lib/modules/* \$ROOTFS_CONFIG/lib/modules/
+if [ ! -d $ROOTFS_CONFIG/lib/modules ]; then mkdir $ROOTFS_CONFIG/lib/modules; fi
+sudo cp -r ./modules/lib/modules/* $ROOTFS_CONFIG/lib/modules/
 
 echo "Setting a mac address (fixing random mac issue)"
 {
@@ -73,21 +73,19 @@ echo "Setting a mac address (fixing random mac issue)"
     echo "";
     echo "auto eth0";
     echo "iface eth0 inet static";
-    echo "address \$IP_BOARD";
+    echo "address $IP_BOARD";
     echo "netmask 255.255.255.0";
     echo "hwaddress ether $MAC_ADDRESS";
-} | cat > \$ROOTFS_CONFIG/etc/network/interfaces
+} | cat > $ROOTFS_CONFIG/etc/network/interfaces
 
 echo "Setting up /dev"
-sudo mknod \$ROOTFS_CONFIG/dev/console c 5 1
-sudo mknod \$ROOTFS_CONFIG/dev/null c 1 3
-sudo mknod \$ROOTFS_CONFIG/dev/ttyS0 c 4 64
-sudo mknod \$ROOTFS_CONFIG/dev/ttyS1 c 4 65
-sudo mknod \$ROOTFS_CONFIG/dev/ttyS2 c 4 66
+sudo mknod $ROOTFS_CONFIG/dev/console c 5 1
+sudo mknod $ROOTFS_CONFIG/dev/null c 1 3
+sudo mknod $ROOTFS_CONFIG/dev/ttyS0 c 4 64
+sudo mknod $ROOTFS_CONFIG/dev/ttyS1 c 4 65
+sudo mknod $ROOTFS_CONFIG/dev/ttyS2 c 4 66
 
 EOF
-
-exit 42
 
 chmod a+x $SETUP_SCRIPT
 

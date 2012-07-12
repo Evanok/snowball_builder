@@ -5,7 +5,7 @@
 # DESCRIPTION : BUILD KERNEL AND ROOTS FOR SNOWBALL
 
 HERE=`pwd`
-BIN_ARM=$HERE/arm-2010.09/bin/arm-none-linux-gnueabi-
+BIN_ARM=$HERE/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 CROSS_PARAMS="ARCH=arm CROSS_COMPILE=$BIN_ARM"
 JOBS=4
 
@@ -73,16 +73,20 @@ done
 
 # check dependancy
 
-echo -n "Check package dependancy..."
+echo -n "Checking for multistrap package..."
 dpkg -l | grep -w multistrap > /dev/null 2>>/tmp/log_error_snowball
 check_error " You must install multistrap package." $?
+echo "Yes."
 
+echo -n "Checking for uboot-mkimage package..."
 dpkg -l | grep -w uboot-mkimage >/dev/null 2>>/tmp/log_error_snowball
 check_error " You must install uboot-mkimage package." $?
+echo "Yes."
 
+echo -n "Checking for git package..."
 dpkg -l | grep -w git >/dev/null 2>>/tmp/log_error_snowball
 check_error " You must install git package." $?
-echo "Done."
+echo "Yes."
 
 
 # check arguments
@@ -111,7 +115,7 @@ fi;
 # clean old project and create new one
 
 echo -n "Cleaning exiting project with the same name..."
-sudo rm -rf $HERE/system/$PROJECT
+rm -rf $HERE/system/$PROJECT
 mkdir $HERE/system/$PROJECT 2>>/tmp/log_error_snowball
 echo "Done."
 
@@ -119,16 +123,14 @@ echo "Done."
 
 echo -n "Check kernel dir..."
 if [ ! -d $HERE/kernel ]; then
-    #git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
-    git clone ssh://accesshowroom/localhome/arthur/git_snowball/kernel $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
+    git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
     check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo "Done."
 
 echo -n "Check cross arm dir..."
-if [ ! -d $HERE/arm-2010.09 ]; then
-    #git clone /home/arthur/git/arm-none-linux-gnueabi.git $CROSS_DIR >/dev/null 2>>/tmp/log_error_snowball
-    git clone ssh://accesshowroom/localhome/arthur/git_snowball/arm-2010.09 $HERE/arm-2010.09 >/dev/null 2>>/tmp/log_error_snowball
+if [ ! -d $HERE/arm-none-linux-gnueabi ]; then
+    git clone /home/arthur/git/arm-none-linux-gnueabi.git arm-none-linux-gnueabi >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo " Done."
@@ -153,15 +155,15 @@ check_error "Unable to get your configure file : $CONFIG" $?
 echo "Done."
 
 echo -n "Bulding uImage..."
-#cd $HERE/kernel && make $CROSS_PARAMS -j $JOBS uImage 1>/dev/null 2>>/tmp/log_error_snowball
-#check_error "Unable to run make uImage" $?
+cd $HERE/kernel && make $CROSS_PARAMS -j $JOBS uImage 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable to run make uImage" $?
 echo "Done."
 
 echo -n "Installing modules...."
-#cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules 1>/dev/null 2>>/tmp/log_error_snowball
-#check_error "Unable to run make modules" $?
-#cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules_install 1>/dev/null 2>>/tmp/log_error_snowball
-#check_error "Unable to run make modules_install" $?
+cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable to run make modules" $?
+cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules_install 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable to run make modules_install" $?
 echo "Done."
 
 # creating rootfs and system for snowball
@@ -174,17 +176,19 @@ mkdir -p $HERE/system/$PROJECT/rootfs_config/boot
 cd $HERE
 
 echo -n "Running config_creator....";
-#$HERE/config_creator $PROJECT 1>/dev/null 2>>/tmp/log_error_snowball
-$HERE/config_creator $PROJECT 2>>/tmp/log_error_snowball
+$HERE/config_creator $PROJECT 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable to run config_creator" $?
 echo "Done."
 
-echo -n "Multistrap...."
-sudo multistrap -f $HERE/system/$PROJECT/rootfs_config/config/snowball_multistrap_configuration 1>/dev/null 2>>/tmp/log_error_snowball
+echo "Multistrap...."
+sudo multistrap -f $HERE/system/$PROJECT/rootfs_config/config/snowball_multistrap_configuration 2>>/tmp/log_error_snowball
 check_error "Unable to run multistrap" $?
 rm -rf modules/lib
-echo " Done...."
 
 cp $HERE/$CONFIG $HERE/system/$PROJECT/configs/
 cp $HERE/kernel//arch/arm/boot/uImage $HERE/system/$PROJECT/rootfs_config/boot/uImage
 
+echo
+echo
+echo "uImage and rootfs for project : $PROJECT... DONE".
+exit 0
