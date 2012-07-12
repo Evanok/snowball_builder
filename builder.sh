@@ -1,34 +1,56 @@
 #!/bin/sh
 
-BASE_PATH=`pwd`
-KERNEL=$PWD/kernel
+# AUTHORS : ARTHUR LAMBERT
+# DATE : 06/07/2012
+# DESCRIPTION : BUILD KERNEL AND ROOTS FOR SNOWBALL
+
+HERE=`pwd`
+BIN_ARM=$HERE/arm-2010.09/bin/arm-none-linux-gnueabi-
+CROSS_PARAMS="ARCH=arm CROSS_COMPILE=$BIN_ARM"
 JOBS=4
-BIN_ARM=$BASE_PATH/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
-ARCH=arm
-CROSS_DIR=$BASE_PATH/arm-none-linux-gnueabi
 
-CROSS_PARAMS="ARCH=$ARCH CROSS_COMPILE=$BIN_ARM"
+# reset error log
 
-error()
+echo >/tmp/log_error_snowball
+
+###############################################################################
+# print error message and return error code 1 when $? is different than 0
+check_error()
 {
-    echo "Error : $1"
-    exit 1;
+    if [ $2 -ne 0 ]; then
+	echo; echo;
+	echo "############################################################"
+	cat /tmp/log_error_snowball
+	echo "############################################################"
+	echo
+	echo "Error (code : $2) : $1"
+	exit $2;
+    fi
 }
+###############################################################################
 
+
+
+
+###############################################################################
+# print usage for this script
 print_usage()
 {
     echo
     echo "Usage: ${0##*/} [OPTION]... <project_name>"
-    echo "shell program to build snowball system"
+    echo "shell script to build snowball system with rootfs and kernel from sources"
     echo
     cat <<EOF
       -h,--help                      display this help and exit
       -c,--config <file>             specify which config file to use (MANDATORY)
-      -p,--project <project name>    provide a project (MANDATORY)
+      -p,--project <project name>    provide a project name (DEFAULT value is : Snowball)
 EOF
     echo
 }
+###############################################################################
 
+
+# Handle arguments through getopt command
 
 options=$(getopt -o hc:p: -l help,config:,project: -- "$@")
 if [ $? -ne  0 ]; then
@@ -48,110 +70,121 @@ while true; do
     esac
 done
 
-dpkg -l | grep multistrap > /dev/null
-if [ $? -ne 0 ]; then
-    echo " You must install mulstistrap package."
-    exit 1
-fi;
 
-dpkg -l | grep uboot-mkimage >/dev/null
-if [ $? -ne 0 ]; then
-    echo " You must install uboot-mkimage package."
-    exit 1
-fi;
+# check dependancy
 
+echo -n "Check package dependancy..."
+dpkg -l | grep -w multistrap > /dev/null 2>>/tmp/log_error_snowball
+check_error " You must install multistrap package." $?
+
+dpkg -l | grep -w uboot-mkimage >/dev/null 2>>/tmp/log_error_snowball
+check_error " You must install uboot-mkimage package." $?
+
+dpkg -l | grep -w git >/dev/null 2>>/tmp/log_error_snowball
+check_error " You must install git package." $?
+echo "Done."
+
+
+# check arguments
+
+echo -n "Checking arguments..."
 if [ ! -z "$CONFIG" ]; then
     if [ ! -f $CONFIG ]; then
-        error "Configure file: $CONFIG not found."
+        check_error "Configure file: $CONFIG not found." 42
     fi;
 else
-    error "You must provide a valid configure file."
+    check_error "You must provide a valid configure file." $? 42
 fi;
 
 if [ -z "$PROJECT" ]; then
-    error "You must provide a valid project name."
+    PROJECT=snowball
+fi;
+echo "Done."
+
+
+# if system directory is not yet create, do it
+
+if [ ! -d $HERE/system ]; then
+    mkdir $HERE/system 2>>/tmp/log_error_snowball
 fi;
 
-if [ ! -d $BASE_PATH/system ]; then
-    mkdir $BASE_PATH/system
-fi;
+# clean old project and create new one
 
-sudo rm -rf $BASE_PATH/system/$PROJECT
-mkdir $BASE_PATH/system/$PROJECT
+echo -n "Cleaning exiting project with the same name..."
+sudo rm -rf $HERE/system/$PROJECT
+mkdir $HERE/system/$PROJECT 2>>/tmp/log_error_snowball
+echo "Done."
 
-ROOTFS=$BASE_PATH/system/$PROJECT/rootfs_config
-
- # COMPILE KERNEL SOURCE
+# check that kernel and cross compiler is up
 
 echo -n "Check kernel dir..."
-if [ ! -d $KERNEL ]; then
-   git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $KERNEL >/dev/null
+if [ ! -d $HERE/kernel ]; then
+    #git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
+    git clone ssh://accesshowroom/localhome/arthur/git_snowball/kernel $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
+    check_error "Unable to git clone igloo kernel from github" $?
 fi
-echo " Done."
+echo "Done."
 
 echo -n "Check cross arm dir..."
-if [ ! -d $CROSS_DIR ]; then
-   git clone /home/arthur/git/arm-none-linux-gnueabi.git $CROSS_DIR >/dev/null
+if [ ! -d $HERE/arm-2010.09 ]; then
+    #git clone /home/arthur/git/arm-none-linux-gnueabi.git $CROSS_DIR >/dev/null 2>>/tmp/log_error_snowball
+    git clone ssh://accesshowroom/localhome/arthur/git_snowball/arm-2010.09 $HERE/arm-2010.09 >/dev/null 2>>/tmp/log_error_snowball
+    check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo " Done."
 
-echo "Compiling kernel [jobs = $JOBS]";
+# build uImage from kernel source
 
-MOD_PATH="INSTALL_MOD_PATH=$ROOTFS/modules/ "
 
-echo ${BASE_PATH}
-echo "Cleaning kernel source...."
-cd $KERNEL && make $CROSS_PARAMS clean
-cd $KERNEL && make $CROSS_PARAMS distclean
+# clean kernel source
+
+echo -n "Cleaning kernel source...."
+cd $HERE/kernel && make $CROSS_PARAMS clean 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable run make clean in kernel source" $?
+cd $HERE/kernel && make $CROSS_PARAMS distclean 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable run make distclean in kernel source" $?
 echo "Done."
 
-echo "cp $BASE_PATH/$CONFIG $KERNEL/.config"
-cp $BASE_PATH/$CONFIG $KERNEL/.config
-echo "Bulding uImage..."
-echo "cd $KERNEL && make $CROSS_PARAMS -j $JOBS uImage"
-cd $KERNEL && make $CROSS_PARAMS -j $JOBS uImage
-res=`echo $?`
-if [ $res -ne 0 ]; then
-    echo "Error during make uImage ($res)".
-    exit $res
-fi;
+# get configure file and build uImage
+
+echo -n "Get configure file...."
+cp $HERE/$CONFIG $HERE/kernel/.config 2>>/tmp/log_error_snowball
+check_error "Unable to get your configure file : $CONFIG" $?
 echo "Done."
 
-echo "Installing modules"
-cd $KERNEL && make $CROSS_PARAMS $MOD_PATH -j$JOBS modules
-cd $KERNEL && make $CROSS_PARAMS $MOD_PATH -j$JOBS modules_install
+echo -n "Bulding uImage..."
+#cd $HERE/kernel && make $CROSS_PARAMS -j $JOBS uImage 1>/dev/null 2>>/tmp/log_error_snowball
+#check_error "Unable to run make uImage" $?
 echo "Done."
 
-cd $BASE_PATH
+echo -n "Installing modules...."
+#cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules 1>/dev/null 2>>/tmp/log_error_snowball
+#check_error "Unable to run make modules" $?
+#cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules_install 1>/dev/null 2>>/tmp/log_error_snowball
+#check_error "Unable to run make modules_install" $?
+echo "Done."
 
-mkdir $BASE_PATH/system/$PROJECT/configs
+# creating rootfs and system for snowball
 
-# END COMPILE
 
-# CREATE ROOT FILESYSTEM
+mkdir $HERE/system/$PROJECT/configs
+mkdir -p $HERE/system/$PROJECT/rootfs_config/scripts
+mkdir -p $HERE/system/$PROJECT/rootfs_config/config
+mkdir -p $HERE/system/$PROJECT/rootfs_config/boot
+cd $HERE
 
-mkdir $ROOTFS/scripts
-mkdir $ROOTFS/config
-mkdir $ROOTFS/boot
-
-$BASE_PATH/config_creator $ROOTFS
-
-echo "Creating filesystem";
-
-if [ ! -d $ROOTFS ]; then
-    error "emdebian sources not found";
-fi
-
-cd $ROOTFS
+echo -n "Running config_creator....";
+#$HERE/config_creator $PROJECT 1>/dev/null 2>>/tmp/log_error_snowball
+$HERE/config_creator $PROJECT 2>>/tmp/log_error_snowball
+check_error "Unable to run config_creator" $?
+echo "Done."
 
 echo -n "Multistrap...."
-sudo multistrap -f $ROOTFS/config/snowball_multistrap_configuration
+sudo multistrap -f $HERE/system/$PROJECT/rootfs_config/config/snowball_multistrap_configuration 1>/dev/null 2>>/tmp/log_error_snowball
+check_error "Unable to run multistrap" $?
 rm -rf modules/lib
 echo " Done...."
 
-cp $BASE_PATH/$CONFIG $BASE_PATH/system/$PROJECT/configs/
-cp $KERNEL/arch/$ARCH/boot/uImage $BASE_PATH/system/$PROJECT/rootfs_config/boot/uImage
+cp $HERE/$CONFIG $HERE/system/$PROJECT/configs/
+cp $HERE/kernel//arch/arm/boot/uImage $HERE/system/$PROJECT/rootfs_config/boot/uImage
 
-cd $BASE_PATH
-
-# END ROOTFS
