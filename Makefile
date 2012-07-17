@@ -8,3 +8,6 @@ clean:
 distclean: clean
 	rm -rf arm-none-linux-gnueabi
 	rm -rf kernel
+
+clean-project:
+	rm -rf output
