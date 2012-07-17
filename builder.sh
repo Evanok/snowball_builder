@@ -37,7 +37,7 @@ check_error()
 print_usage()
 {
     echo
-    echo "Usage: ${0##*/} [OPTION]... <project_name>"
+    echo "Usage: ${0##*/} [OPTION]... <project_name> <config file>"
     echo "shell script to build snowball system with rootfs and kernel from sources"
     echo
     cat <<EOF
@@ -53,7 +53,7 @@ EOF
 # Handle arguments through getopt command
 
 options=$(getopt -o hc:p: -l help,config:,project: -- "$@")
-if [ $? -ne  0 ]; then
+if [ $? -ne  0 ] || [ $# -ne 4 ]; then
     print_usage
     exit 1
 fi
@@ -122,6 +122,7 @@ fi;
 
 echo -n "Cleaning exiting project with the same name..."
 rm -rf $HERE/system/$PROJECT
+rm -rf $HERE/output/$PROJECT
 mkdir $HERE/system/$PROJECT 2>>/tmp/log_error_snowball
 mkdir $HERE/output/$PROJECT 2>>/tmp/log_error_snowball
 echo "Done."
