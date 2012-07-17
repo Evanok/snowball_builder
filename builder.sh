@@ -112,11 +112,18 @@ if [ ! -d $HERE/system ]; then
     mkdir $HERE/system 2>>/tmp/log_error_snowball
 fi;
 
+# if output directory is not yet create, do it
+
+if [ ! -d $HERE/output ]; then
+    mkdir $HERE/output 2>>/tmp/log_error_snowball
+fi;
+
 # clean old project and create new one
 
 echo -n "Cleaning exiting project with the same name..."
 rm -rf $HERE/system/$PROJECT
 mkdir $HERE/system/$PROJECT 2>>/tmp/log_error_snowball
+mkdir $HERE/output/$PROJECT 2>>/tmp/log_error_snowball
 echo "Done."
 
 # check that kernel and cross compiler is up
