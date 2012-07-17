@@ -85,6 +85,7 @@ sudo mknod \$1/dev/ttyAMA0 c 4 64
 sudo mknod \$1/dev/ttyAMA1 c 4 65
 sudo mknod \$1/dev/ttyAMA2 c 4 66
 sudo cp -R \$1/../firmware/* \$1/lib/firmware/.
+sudo cp -R \$1/../bluez_patch \$1/.
 
 EOF
 
@@ -106,6 +107,9 @@ printf "T2:123:respawn:/sbin/getty 115200 ttyAMA2\n" >> etc/inittab
 echo "Set a new root password"
 passwd
 chage -d 150 root
+apt-get update
+apt-get build-dep bluez
+cd /bluez_patch && ./configure --prefix=/usr && make && make install
 hciattach -a 23 -n -s 115200 /dev/ttyAMA0 cg2900 115200 flow &
 sleep 5
 modprobe cw1200_core
