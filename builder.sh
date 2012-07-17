@@ -192,10 +192,12 @@ sudo multistrap -f $HERE/system/$PROJECT/rootfs_config/config/snowball_multistra
 check_error "Unable to run multistrap" $?
 rm -rf modules/lib
 
-cp $HERE/$CONFIG $HERE/system/$PROJECT/configs/
-cp $HERE/kernel//arch/arm/boot/uImage $HERE/system/$PROJECT/rootfs_config/boot/uImage
+cp $HERE/kernel//arch/arm/boot/uImage $HERE/output/$PROJECT/uImage
+rm -rf $HERE/system/$PROJECT
+sudo rm -rf $HERE/rootfs
 
 echo
 echo
-echo "uImage and rootfs for project : $PROJECT... DONE".
+echo "uImage and rootfs for project : DONE"
+echo "Result is under $HERE/output/$PROJECT"
 exit 0

@@ -1,4 +1,4 @@
-B1;2403;0c#!/bin/bash
+#!/bin/bash
 
 PROJECT=$1
 HERE=`pwd`
@@ -33,7 +33,7 @@ echo "[General]" > $CONFIG_MULTISTRAP
 
     echo
     echo "#Filesystem will be placed in"
-    echo "tarballname=./$PROJECT/rootfs_config/boot/rootfs-armel-snowball.tar"
+    echo "tarballname=./output/$PROJECT/rootfs-armel-snowball.tar"
     echo
     echo "aptsources=squeeze"
     echo "bootstrap=squeeze"
