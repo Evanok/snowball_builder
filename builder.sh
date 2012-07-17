@@ -137,8 +137,15 @@ echo "Done."
 
 echo -n "Check cross arm dir..."
 if [ ! -d $HERE/arm-none-linux-gnueabi ]; then
-    git clone /home/arthur/git/arm-none-linux-gnueabi.git arm-none-linux-gnueabi >/dev/null 2>>/tmp/log_error_snowball
-    check_error "Unable to git clone igloo kernel from github" $?
+    git clone https://github.com/Evanok/arm-none-linux-gnueabi.git arm-none-linux-gnueabi >/dev/null 2>>/tmp/log_error_snowball
+    check_error "Unable to git clone cross arm from github" $?
+fi
+echo " Done."
+
+echo -n "Check bluez patch dir..."
+if [ ! -d $HERE/bluez_patch ]; then
+    git clone /home/arthur/git/bluez_debian_snowball.git bluez_patch >/dev/null 2>>/tmp/log_error_snowball
+    check_error "Unable to git clone bluez patch from github" $?
 fi
 echo " Done."
 
