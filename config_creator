@@ -64,7 +64,7 @@ echo "sysfs /sys sysfs defaults 0 0" >> \$1/etc/fstab
 
 echo "Copying kernel modules"
 if [ ! -d \$1/lib/modules ]; then mkdir \$1/lib/modules; fi
-sudo cp -r ./modules/lib/modules/* \$1/lib/modules/
+sudo cp -r \$1/../system/$PROJECT/rootfs_config/modules/lib/modules/* \$1/lib/modules/.
 
 echo "Setting a mac address (fixing random mac issue)"
 {
@@ -107,6 +107,12 @@ printf "T2:123:respawn:/sbin/getty 115200 ttyAMA2\n" >> etc/inittab
 echo "Set a new root password"
 passwd
 chage -d 150 root
+dhclient eth0 2>/dev/null
+if [ -f /etc/apt/sources.list ]; then
+   echo "deb-src http://ftp.fr.debian.org/debian/ squeeze main" >> /etc/apt/sources.list
+else
+   echo "deb-src http://ftp.fr.debian.org/debian/ squeeze main" >> /etc/apt/sources.list.d/multistrap-squeeze.list
+fi
 apt-get update
 apt-get build-dep bluez
 cd /bluez_patch && ./configure --prefix=/usr && make && make install
