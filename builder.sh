@@ -8,6 +8,7 @@ HERE=`pwd`
 BIN_ARM=$HERE/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 CROSS_PARAMS="ARCH=arm CROSS_COMPILE=$BIN_ARM"
 JOBS=4
+BRANCH=stable-android-ux500-3.3-1
 
 # reset error log
 
@@ -131,8 +132,7 @@ echo "Done."
 
 echo -n "Check kernel dir..."
 if [ ! -d $HERE/kernel ]; then
-    git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
-    git clone git://igloocommunity.org/git/kernel/igloo-kernel.git -b stable-android-ux500-3.3-1
+    git clone git://igloocommunity.org/git/kernel/igloo-kernel.git -b $BRANCH $HERE/kernel >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo "Done."
