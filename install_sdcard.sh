@@ -71,34 +71,43 @@ date
 echo "DEV=$DEV_ENTRY, PROJECT=$PROJECT"
 echo
 
-if [ ! -d $HERE/output/$PROJECT ]; then
+if [ -z $PROJECT ] || [ ! -d $HERE/output/$PROJECT ]; then
     check_error "Incorrect $PROJECT value. $HERE/output/$PROJECT directory does not exist." 42
 fi;
 
 
-if [ ! -d /dev/$DEV_ENTRY ]; then
+if [ -z $DEV_ENTRY ] || [ ! -e /dev/$DEV_ENTRY ]; then
     check_error "Bad dev entry : $DEV_ENTRY, /dev/$DEV_ENTRY does not exist." 42
 fi;
 
+sudo umount /dev/${DEV_ENTRY}1 2>>/tmp/log_error_snowball
+sudo umount /dev/${DEV_ENTRY}2 2>>/tmp/log_error_snowball
+
 echo -n "Copying uImage..."
-mkdir $HERE/sd_boot
-sudo mount ${DEV_ENTRY}1 $HERE/sd_boot 2>>/tmp/log_error_snowball
+mkdir $HERE/sd_boot 2>>/tmp/log_error_snowball
+sudo mount /dev/${DEV_ENTRY}1 $HERE/sd_boot 2>>/tmp/log_error_snowball
+sudo rm -rf $HERE/sd_boot/* 2>>/tmp/log_error_snowball
 check_error " Unable to mount ${DEV_ENTRY}1." $?
-sudo cp $HERE/output/$PROJECT/uImage $HERE/sd_boot/.
+sudo cp $HERE/output/$PROJECT/uImage $HERE/sd_boot/. 2>>/tmp/log_error_snowball
 sync
-sudo umount ${DEV_ENTRY}1
+sudo umount $HERE/sd_boot 2>>/tmp/log_error_snowball
 rm -rf $HERE/sd_boot
 echo " Done."
 echo
 
 echo -n "Copying rootfs..."
-mkdir $HERE/sd_rootfs
-sudo mount ${DEV_ENTRY}2 $HERE/sd_rootfs 2>>/tmp/log_error_snowball
+mkdir $HERE/sd_rootfs 2>>/tmp/log_error_snowball
+sudo mount /dev/${DEV_ENTRY}2 $HERE/sd_rootfs 2>>/tmp/log_error_snowball
 check_error " Unable to mount ${DEV_ENTRY}2." $?
-sudo cp $HERE/output/$PROJECT/rootfs-armel-snowball.tar $HERE/sd_rootfs/.
-cd $HERE/sd_rootfs && sudo tar -xf rootfs-armel-snowball.tar
-sudo rm $HERE/sd_rootfs/rootfs-armel-snowball.tar
+sudo rm -rf $HERE/sd_rootfs/* 2>>/tmp/log_error_snowball
+sudo cp $HERE/output/$PROJECT/rootfs-armel-snowball.tar $HERE/sd_rootfs/. 2>>/tmp/log_error_snowball
+cd $HERE/sd_rootfs && sudo tar -xf rootfs-armel-snowball.tar 2>>/tmp/log_error_snowball
+cd $HERE
+sudo rm $HERE/sd_rootfs/rootfs-armel-snowball.tar 2>>/tmp/log_error_snowball
 sync
-sudo umount ${DEV_ENTRY}2
-rm -rf $HERE/sd_rootfs
+sleep 5
+sudo umount $HERE/sd_rootfs 2>>/tmp/log_error_snowball
+sudo rm -rf $HERE/sd_rootfs 2>>/tmp/log_error_snowball
 echo " Done."
+
+date

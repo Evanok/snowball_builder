@@ -132,6 +132,7 @@ echo "Done."
 echo -n "Check kernel dir..."
 if [ ! -d $HERE/kernel ]; then
     git clone https://github.com/Evanok/igloo_kernel_android_linux3.3.git $HERE/kernel 2>>/tmp/log_error_snowball 1>/dev/null
+    git clone git://igloocommunity.org/git/kernel/igloo-kernel.git -b stable-android-ux500-3.3-1
     check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo "Done."
