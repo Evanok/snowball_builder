@@ -15,16 +15,46 @@ BRANCH=stable-android-ux500-3.3-1
 echo >/tmp/log_error_snowball
 
 ###############################################################################
+# echo in red
+echo_red()
+{
+    red="\033[31m";
+    white="\033[37m";
+
+    printf $red
+    echo $1
+    printf $white
+}
+###############################################################################
+
+###############################################################################
+# echo in green
+echo_green()
+{
+    green="\033[32m";
+    white="\033[37m";
+
+    printf $green
+    echo $1
+    printf $white
+}
+###############################################################################
+
+###############################################################################
 # print error message and return error code 1 when $? is different than 0
 check_error()
 {
+    red="\033[31m";
+
     if [ $2 -ne 0 ]; then
 	echo; echo;
 	echo "############################################################"
 	cat /tmp/log_error_snowball
 	echo "############################################################"
 	echo
+	printf $red
 	echo "Error (code : $2) : $1"
+	printf $white
 	exit $2;
     fi
 }
@@ -104,7 +134,7 @@ fi;
 if [ -z "$PROJECT" ]; then
     PROJECT=snowball
 fi;
-echo "Done."
+echo_green "Done."
 
 
 # if system directory is not yet create, do it
@@ -126,19 +156,23 @@ rm -rf $HERE/system/$PROJECT
 rm -rf $HERE/output/$PROJECT
 mkdir $HERE/system/$PROJECT 2>>/tmp/log_error_snowball
 mkdir $HERE/output/$PROJECT 2>>/tmp/log_error_snowball
-echo "Done."
+echo_green "Done."
 
 # check that kernel and cross compiler is up
 
 echo -n "Check kernel dir..."
 if [ ! -d $HERE/kernel ]; then
+    echo_red "KO"
+    echo -n "Getting kernel sources..."
     git clone git://igloocommunity.org/git/kernel/igloo-kernel.git -b $BRANCH $HERE/kernel >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone igloo kernel from github" $?
 fi
-echo "Done."
+echo_green "Done."
 
 echo -n "Check cross arm dir..."
 if [ ! -d $HERE/arm-none-linux-gnueabi ]; then
+    echo_red "KO"
+    echo -n "Getting cross arm compiler..."
     git clone https://github.com/Evanok/arm-none-linux-gnueabi.git arm-none-linux-gnueabi >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone cross arm from github" $?
 fi
@@ -161,26 +195,26 @@ cd $HERE/kernel && make $CROSS_PARAMS clean 1>/dev/null 2>>/tmp/log_error_snowba
 check_error "Unable run make clean in kernel source" $?
 cd $HERE/kernel && make $CROSS_PARAMS distclean 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable run make distclean in kernel source" $?
-echo "Done."
+echo_green "Done."
 
 # get configure file and build uImage
 
 echo -n "Get configure file...."
 cp $HERE/$CONFIG $HERE/kernel/.config 2>>/tmp/log_error_snowball
 check_error "Unable to get your configure file : $CONFIG" $?
-echo "Done."
+echo_green "Done."
 
 echo -n "Bulding uImage..."
 cd $HERE/kernel && make $CROSS_PARAMS -j $JOBS uImage 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable to run make uImage" $?
-echo "Done."
+echo_green "Done."
 
 echo -n "Installing modules...."
 cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable to run make modules" $?
 cd $HERE/kernel && make $CROSS_PARAMS INSTALL_MOD_PATH=$HERE/system/$PROJECT/rootfs_config/modules/ -j$JOBS modules_install 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable to run make modules_install" $?
-echo "Done."
+echo_green "Done."
 
 # creating rootfs and system for snowball
 
@@ -194,7 +228,7 @@ cd $HERE
 echo -n "Running config_creator....";
 $HERE/config_creator $PROJECT 1>/dev/null 2>>/tmp/log_error_snowball
 check_error "Unable to run config_creator" $?
-echo "Done."
+echo_green "Done."
 
 echo "Multistrap...."
 sudo multistrap -f $HERE/system/$PROJECT/rootfs_config/config/snowball_multistrap_configuration 2>>/tmp/log_error_snowball
@@ -207,6 +241,6 @@ sudo rm -rf $HERE/rootfs
 
 echo
 echo
-echo "uImage and rootfs for project : DONE"
+echo_green "uImage and rootfs for project : DONE"
 echo "Result is under $HERE/output/$PROJECT"
 exit 0
