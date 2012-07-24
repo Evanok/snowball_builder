@@ -160,7 +160,7 @@ echo_green "Done."
 
 # check that kernel and cross compiler is up
 
-echo -n "Check kernel dir..."
+echo -n "Check if kernel source dir is present..."
 if [ ! -d $HERE/kernel ]; then
     echo_red "KO"
     echo -n "Getting kernel sources..."
@@ -169,7 +169,7 @@ if [ ! -d $HERE/kernel ]; then
 fi
 echo_green "Done."
 
-echo -n "Check cross arm dir..."
+echo -n "Check if cross arm compiler dir is present..."
 if [ ! -d $HERE/arm-none-linux-gnueabi ]; then
     echo_red "KO"
     echo -n "Getting cross arm compiler..."
