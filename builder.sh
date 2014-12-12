@@ -106,7 +106,7 @@ check_error " You must install multistrap package." $?
 echo "Yes."
 
 echo -n "Checking for uboot-mkimage package..."
-dpkg -l | grep -w uboot-mkimage >/dev/null 2>>/tmp/log_error_snowball
+dpkg -l | grep -w "uboot-mkimage\|u-boot-tools" >/dev/null 2>>/tmp/log_error_snowball
 check_error " You must install uboot-mkimage package." $?
 echo "Yes."
 
