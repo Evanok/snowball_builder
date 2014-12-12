@@ -4,6 +4,10 @@
 # DATE : 06/07/2012
 # DESCRIPTION : BUILD KERNEL AND ROOTS FOR SNOWBALL
 
+red="\033[31m";
+white="\033[37m";
+green="\033[32m";
+
 HERE=`pwd`
 BIN_ARM=$HERE/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 CROSS_PARAMS="ARCH=arm CROSS_COMPILE=$BIN_ARM"
@@ -18,9 +22,6 @@ echo >/tmp/log_error_snowball
 # echo in red
 echo_red()
 {
-    red="\033[31m";
-    white="\033[37m";
-
     printf $red
     echo $1
     printf $white
@@ -31,9 +32,6 @@ echo_red()
 # echo in green
 echo_green()
 {
-    green="\033[32m";
-    white="\033[37m";
-
     printf $green
     echo $1
     printf $white
@@ -44,8 +42,6 @@ echo_green()
 # print error message and return error code 1 when $? is different than 0
 check_error()
 {
-    red="\033[31m";
-
     if [ $2 -ne 0 ]; then
 	echo; echo;
 	echo "############################################################"
