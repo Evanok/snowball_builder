@@ -51,6 +51,14 @@ check_error()
 	printf $red
 	echo "Error (code : $2) : $1"
 	printf $white
+
+	grep "forceyes" /tmp/log_error_snowball | grep  "requires explicit package name" 2>/dev/null
+	if [ $? -eq 0 ]; then
+		echo "";
+		echo_red "Bug on multistrap due to forceyes : https://bugs.launchpad.net/ubuntu/+source/multistrap/+bug/1313787"
+		echo "";
+	fi;
+
 	exit $2;
     fi
 }
