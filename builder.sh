@@ -160,7 +160,7 @@ echo -n "Check if kernel source dir is present..."
 if [ ! -d $HERE/kernel ]; then
     echo_red "KO"
     echo -n "Getting kernel sources..."
-    git clone git://igloocommunity.org/git/kernel/igloo-kernel.git -b $BRANCH $HERE/kernel >/dev/null 2>>/tmp/log_error_snowball
+    git clone git@github.com:igloocommunity/igloo-kernel.git -b $BRANCH $HERE/kernel >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone igloo kernel from github" $?
 fi
 echo_green "Done."
@@ -172,14 +172,14 @@ if [ ! -d $HERE/arm-none-linux-gnueabi ]; then
     git clone https://github.com/Evanok/arm-none-linux-gnueabi.git arm-none-linux-gnueabi >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone cross arm from github" $?
 fi
-echo " Done."
+echo_green " Done."
 
 echo -n "Check bluez patch dir..."
 if [ ! -d $HERE/bluez_patch ]; then
-    git clone /home/arthur/git/bluez_debian_snowball.git bluez_patch >/dev/null 2>>/tmp/log_error_snowball
+    git clone git@github.com:Evanok/bluez_debian_snowball.git bluez_patch >/dev/null 2>>/tmp/log_error_snowball
     check_error "Unable to git clone bluez patch from github" $?
 fi
-echo " Done."
+echo_green " Done."
 
 # build uImage from kernel source
 
